@@ -17,7 +17,8 @@ const Convenience = Me.imports.convenience;
 
 const ScreenShield = imports.ui.screenShield;
 
-var MANUAL_FADE_TIME = 0.3;
+const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
+const MANUAL_FADE_TIME = 0.3;
 
 const UPowerIface = '<node> \
 <interface name="org.freedesktop.UPower"> \
@@ -27,15 +28,56 @@ const UPowerIface = '<node> \
 
 const UPowerProxy = Gio.DBusProxy.makeProxyWrapper(UPowerIface);
 
+class Unblank {
+    constructor() {
+        this.gsettings = Convenience.getSettings(SCHEMA_NAME);
+        this._switchChanged();
+        this.connect_signal();
+
+        this.setActiveOrigin = ScreenShield.ScreenShield._setActive;
+        this.activateFadeOrigin = ScreenShield.ScreenShield._activateFade;
+        this.resetLockScreenOrigin = ScreenShield.ScreenShield._resetLockScreen;
+
+        Main.screenShield._setActive = _setActive;
+        Main.screenShield._activateFade = _activateFade;
+        Main.screenShield._resetLockScreen = _resetLockScreen;
+
+        this.powerProxy = new UPowerProxy(Gio.DBus.system,
+                                'org.freedesktop.UPower',
+                                '/org/freedesktop/UPower',
+                                (proxy, error) => {
+                                    if (error) {
+                                        log(error.message);
+                                        return;
+                                    }
+                                    this.powerProxy.connect('g-properties-changed', () => this.sync());
+                                    this.sync();
+                                });
+    }
+
+    _switchChanged() {
+        this.isUnblank = this.gsettings.get_boolean('switch');
+    }
+
+    connect_signal() {
+        this.signalSwitchId = this.gsettings.connect("changed::switch", this._switchChanged.bind(this));
+    }
+
+    sync() {
+        //if (Main.screenShield._isActive && powerProxy.OnBattery) {
+        //    Main.screenShield.emit('active-changed');
+        //}
+    }
+}
+
 function _setActive(active) {
     let prevIsActive = this._isActive;
     this._isActive = active;
 
-    print("wxg: setActive");
-    print("wxg: onBattery=", powerProxy.OnBattery);
     if (prevIsActive != this._isActive) {
-        if (powerProxy.OnBattery)
+        if (!unblank.isUnblank) {
             this.emit('active-changed');
+        }
     }
 
     if (this._loginSession)
@@ -45,10 +87,11 @@ function _setActive(active) {
 }
 
 function _activateFade(lightbox, time) {
-    print("wxg: activateFade");
     Main.uiGroup.set_child_above_sibling(lightbox.actor, null);
-    if (lightbox != this._longLightbox) {
-        print("wxg: shortLightbox show");
+    if (unblank.isUnblank) {
+        if (lightbox != this._longLightbox)
+            lightbox.show(time);
+    } else {
         lightbox.show(time);
     }
 
@@ -67,13 +110,11 @@ function _resetLockScreen(params) {
     this._lockScreenGroup.show();
     this._lockScreenState = MessageTray.State.SHOWING;
 
-    //wxg
-    print("wxg: resetLockScreen");
     let fadeToBlack;
-    if (powerProxy.OnBattery) {
-        fadeToBlack = params.fadeToBlack;
-    } else {
+    if (unblank.isUnblank) {
         fadeToBlack = false;
+    } else {
+        fadeToBlack = params.fadeToBlack;
     }
 
     if (params.animateLockScreen) {
@@ -101,48 +142,14 @@ function _resetLockScreen(params) {
         Main.sessionMode.pushMode('lock-screen');
 }
 
-function sync() {
-    //print("wxg: onBattery=", powerProxy.OnBattery);
-    //print("wxg: active=", Main.screenShield._isActive);
-    //if (Main.screenShield._isActive && powerProxy.OnBattery) {
-    //    Main.screenShield.emit('active-changed');
-    //}
-    print("wxg: _sync");
-}
-
-let setActiveOrigin;
-let activateFadeOrigin;
-let resetLockScreenOrigin;
-
-let powerProxy;
+let unblank;
 
 function init() {
-    setActiveOrigin = ScreenShield.ScreenShield._setActive;
-    activateFadeOrigin = ScreenShield.ScreenShield._activateFade;
-    resetLockScreenOrigin = ScreenShield.ScreenShield._resetLockScreen;
-        
-    Main.screenShield._setActive = _setActive;
-    Main.screenShield._activateFade = _activateFade;
-    Main.screenShield._resetLockScreen = _resetLockScreen;
-
-    powerProxy = new UPowerProxy(Gio.DBus.system,
-                                   'org.freedesktop.UPower',
-                                   '/org/freedesktop/UPower',
-                                   (proxy, error) => {
-                                       if (error) {
-                                           log(error.message);
-                                           return;
-                                       }
-                                       powerProxy.connect('g-properties-changed', () => sync());
-                                       sync();
-                                   });
-    print("wxg: init");
+    unblank = new Unblank();
 }
 
 function enable() {
-    print("wxg: enable");
 }
 
 function disable() {
-    print("wxg: disable");
 }

@@ -1,0 +1,11 @@
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema id="org.gnome.shell.extensions.unblank" path="/org/gnome/shell/extensions/unblank/">
+    <key name="switch" type="b">
+      <default>true</default>
+      <summary>Key to switch unblank</summary>
+      <description>
+      </description>
+    </key>
+  </schema>
+</schemalist>
+
