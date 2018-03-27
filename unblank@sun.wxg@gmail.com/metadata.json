@@ -1,6 +1,6 @@
 {
   "description": "Unblank screen when screen saver becomes active. \n\n After you install extension, the extension will become enable. If you want to disable extension, you need to delete this extension or go to this extension settings to turn off switch.",
-  "name": "Unblank",
+  "name": "Unblank screen saver",
   "original-authors": "sun.wxg@gmail.com",
   "shell-version": [ "3.26", "3.28" ],
   "url": "https://github.com/sunwxg/gnome-shell-extension-unblank",
