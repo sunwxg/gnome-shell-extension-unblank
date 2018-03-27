@@ -1,6 +1,6 @@
 {
   "_generated": "xiaoguang wang",
-  "description": "screen saver unblank",
+  "description": "Unblank screen when screen saver becomes active",
   "name": "Unblank",
   "original-authors": [
     "sun.wxg@gmail.com"

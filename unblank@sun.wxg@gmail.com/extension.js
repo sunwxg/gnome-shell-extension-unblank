@@ -31,16 +31,13 @@ const UPowerProxy = Gio.DBusProxy.makeProxyWrapper(UPowerIface);
 class Unblank {
     constructor() {
         this.gsettings = Convenience.getSettings(SCHEMA_NAME);
-        this._switchChanged();
+
+        this.setActiveOrigin = Main.screenShield._setActive;
+        this.activateFadeOrigin = Main.screenShield._activateFade;
+        this.resetLockScreenOrigin = Main.screenShield._resetLockScreen;
+
         this.connect_signal();
-
-        this.setActiveOrigin = ScreenShield.ScreenShield._setActive;
-        this.activateFadeOrigin = ScreenShield.ScreenShield._activateFade;
-        this.resetLockScreenOrigin = ScreenShield.ScreenShield._resetLockScreen;
-
-        Main.screenShield._setActive = _setActive;
-        Main.screenShield._activateFade = _activateFade;
-        Main.screenShield._resetLockScreen = _resetLockScreen;
+        this._switchChanged();
 
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
                                 'org.freedesktop.UPower',
@@ -57,6 +54,15 @@ class Unblank {
 
     _switchChanged() {
         this.isUnblank = this.gsettings.get_boolean('switch');
+        if (this.isUnblank) {
+            Main.screenShield._setActive = _setActive;
+            Main.screenShield._activateFade = _activateFade;
+            Main.screenShield._resetLockScreen = _resetLockScreen;
+        } else {
+            Main.screenShield._setActive = this.setActiveOrigin;
+            Main.screenShield._activateFade = this.activateFadeOrigin;
+            Main.screenShield._resetLockScreen = this.resetLockScreenOrigin;
+        }
     }
 
     connect_signal() {
