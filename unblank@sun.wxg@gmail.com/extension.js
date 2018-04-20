@@ -1,6 +1,8 @@
 // -*- mode: js2; indent-tabs-mode: nil; js2-basic-offset: 4 -*-
 
 const Gio = imports.gi.Gio;
+const Clutter = imports.gi.Clutter;
+const GLib = imports.gi.GLib;
 const St = imports.gi.St;
 const Mainloop = imports.mainloop;
 
@@ -19,6 +21,7 @@ const ScreenShield = imports.ui.screenShield;
 
 const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 const MANUAL_FADE_TIME = 0.3;
+const ARROW_IDLE_TIME = 30000; // ms
 
 const UPowerIface = '<node> \
 <interface name="org.freedesktop.UPower"> \
@@ -35,6 +38,10 @@ class Unblank {
         this.setActiveOrigin = Main.screenShield._setActive;
         this.activateFadeOrigin = Main.screenShield._activateFade;
         this.resetLockScreenOrigin = Main.screenShield._resetLockScreen;
+        this.startArrowAnimationOrigin = Main.ScreenShield._startArrowAnimation;
+        this.pauseArrowAnimationOrigin = Main.ScreenShield._pauseArrowAnimation;
+        this.stopArrowAnimationOrigin = Main.ScreenShield._stopArrowAnimation;
+        this.liftShieldOrigin = Main.ScreenShield._liftShield;
 
         this.connect_signal();
         this._switchChanged();
@@ -58,10 +65,18 @@ class Unblank {
             Main.screenShield._setActive = _setActive;
             Main.screenShield._activateFade = _activateFade;
             Main.screenShield._resetLockScreen = _resetLockScreen;
+            Main.screenShield._startArrowAnimation = _startArrowAnimation;
+            Main.screenShield._pauseArrowAnimation = _pauseArrowAnimation;
+            Main.screenShield._stopArrowAnimation = _stopArrowAnimation;
+            Main.screenShield._liftShield = _liftShield;
         } else {
             Main.screenShield._setActive = this.setActiveOrigin;
             Main.screenShield._activateFade = this.activateFadeOrigin;
             Main.screenShield._resetLockScreen = this.resetLockScreenOrigin;
+            Main.screenShield._startArrowAnimation = this.startArrowAnimationOrigin;
+            Main.screenShield._pauseArrowAnimation = this.pauseArrowAnimationOrigin;
+            Main.screenShield._stopArrowAnimation = this.stopArrowAnimationOrigin;
+            Main.screenShield._liftShield = this.liftShieldOrigin;
         }
     }
 
@@ -79,6 +94,11 @@ class Unblank {
 function _setActive(active) {
     let prevIsActive = this._isActive;
     this._isActive = active;
+
+    if (active && !this._pointerWatchId) {
+        this._pointerWatchId = Mainloop.timeout_add(1000, _setPointerVisible.bind(this));
+        GLib.Source.set_name_by_id(this._pointerWatchId, '[gnome-shell] this._setPointerVisible');
+    }
 
     if (prevIsActive != this._isActive) {
         if (!unblank.isUnblank) {
@@ -146,6 +166,87 @@ function _resetLockScreen(params) {
 
     if (Main.sessionMode.currentMode != 'lock-screen')
         Main.sessionMode.pushMode('lock-screen');
+}
+
+function _liftShield(onPrimary, velocity) {
+    if (this._isLocked) {
+        if (this._ensureUnlockDialog(onPrimary, true /* allowCancel */)) {
+            this._hideLockScreen(true /* animate */, velocity);
+            if (this._pointerWatchId) {
+                Mainloop.source_remove(this._pointerWatchId);
+                this._pointerWatchId= 0;
+            }
+        }
+    } else {
+        this.deactivate(true /* animate */);
+    }
+}
+
+function _startArrowAnimation() {
+    this._arrowActiveWatchId = 0;
+    this._arrowAnimationState = 1;
+
+    if (!this._arrowAnimationId) {
+        this._arrowAnimationId = Mainloop.timeout_add(6000, this._animateArrows.bind(this));
+        GLib.Source.set_name_by_id(this._arrowAnimationId, '[gnome-shell] this._animateArrows');
+        this._animateArrows();
+    }
+
+    if (!this._arrowWatchId)
+        this._arrowWatchId = this.idleMonitor.add_idle_watch(ARROW_IDLE_TIME,
+            this._pauseArrowAnimation.bind(this));
+}
+
+function _setPointerVisible() {
+    if (this._lockScreenState == MessageTray.State.SHOWN && this._arrowAnimationState == 0) {
+        if (!this._motionId)
+            this._motionId = global.stage.connect('captured-event', (stage, event) => {
+                if (event.type() == Clutter.EventType.MOTION) {
+                    this._cursorTracker.set_pointer_visible(true);
+                    global.stage.disconnect(this._motionId);
+                    this._motionId = 0;
+                }
+
+                return Clutter.EVENT_PROPAGATE;
+            });
+
+        this._cursorTracker.set_pointer_visible(false);
+    }
+
+    return GLib.SOURCE_CONTINUE;
+}
+
+function _pauseArrowAnimation() {
+    this._arrowAnimationState = 0;
+
+    if (this._arrowAnimationId) {
+        Mainloop.source_remove(this._arrowAnimationId);
+        this._arrowAnimationId = 0;
+    }
+
+    if (!this._arrowActiveWatchId)
+        this._arrowActiveWatchId = this.idleMonitor.add_user_active_watch(this._startArrowAnimation.bind(this));
+}
+
+function _stopArrowAnimation() {
+    this._arrowAnimationState = 0;
+
+    if (this._arrowAnimationId) {
+        Mainloop.source_remove(this._arrowAnimationId);
+        this._arrowAnimationId = 0;
+    }
+    if (this._arrowActiveWatchId) {
+        this.idleMonitor.remove_watch(this._arrowActiveWatchId);
+        this._arrowActiveWatchId = 0;
+    }
+    if (this._arrowWatchId) {
+        this.idleMonitor.remove_watch(this._arrowWatchId);
+        this._arrowWatchId = 0;
+    }
+    if (this._pointerWatchId) {
+        Mainloop.source_remove(this._pointerWatchId);
+        this._pointerWatchId= 0;
+    }
 }
 
 let unblank;
