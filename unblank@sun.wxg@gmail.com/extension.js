@@ -91,7 +91,10 @@ class Unblank {
     }
 }
 
+const BLANK_DELAY = 6000 * 1; // min
+
 function _setActive(active) {
+    print("wxg: _setActive: active=", active);
     let prevIsActive = this._isActive;
     this._isActive = active;
 
@@ -101,6 +104,22 @@ function _setActive(active) {
     }
 
     if (prevIsActive != this._isActive) {
+        if (active) {
+            if (this._blankDelayId) {
+                Mainloop.source_remove(this._blankDelayId);
+                this._blankDelayId= 0;
+            }
+
+            this._blankDelayId = Mainloop.timeout_add(BLANK_DELAY,
+                                                      () => {
+                                                          print("wxg: emit active-changes");
+                                                          this.emit('active-changed');
+                                                          this._blankDelayId = 0;
+                                                          return GLib.SOURCE_REMOVE;
+                                                      });
+        } else
+            this.emit('active-changed');
+
         if (!unblank.isUnblank) {
             this.emit('active-changed');
         }
@@ -176,6 +195,10 @@ function _liftShield(onPrimary, velocity) {
                 Mainloop.source_remove(this._pointerWatchId);
                 this._pointerWatchId= 0;
             }
+            if (this._blankDelayId) {
+                Mainloop.source_remove(this._blankDelayId);
+                this._blankDelayId= 0;
+            }
         }
     } else {
         this.deactivate(true /* animate */);
@@ -246,6 +269,10 @@ function _stopArrowAnimation() {
     if (this._pointerWatchId) {
         Mainloop.source_remove(this._pointerWatchId);
         this._pointerWatchId= 0;
+    }
+    if (this._blankDelayId) {
+        Mainloop.source_remove(this._blankDelayId);
+        this._blankDelayId= 0;
     }
 }
 
