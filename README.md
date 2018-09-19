@@ -12,4 +12,6 @@ make install
 relogin OS
 ```
 
+From gnome extensions website: https://extensions.gnome.org/extension/1414/unblank/
+
 ![screenshot](/Screenshot.png)

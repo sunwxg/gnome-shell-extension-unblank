@@ -38,10 +38,10 @@ class Unblank {
         this.setActiveOrigin = Main.screenShield._setActive;
         this.activateFadeOrigin = Main.screenShield._activateFade;
         this.resetLockScreenOrigin = Main.screenShield._resetLockScreen;
-        this.startArrowAnimationOrigin = Main.ScreenShield._startArrowAnimation;
-        this.pauseArrowAnimationOrigin = Main.ScreenShield._pauseArrowAnimation;
-        this.stopArrowAnimationOrigin = Main.ScreenShield._stopArrowAnimation;
-        this.liftShieldOrigin = Main.ScreenShield._liftShield;
+        this.startArrowAnimationOrigin = Main.screenShield._startArrowAnimation;
+        this.pauseArrowAnimationOrigin = Main.screenShield._pauseArrowAnimation;
+        this.stopArrowAnimationOrigin = Main.screenShield._stopArrowAnimation;
+        this.liftShieldOrigin = Main.screenShield._liftShield;
 
         this.connect_signal();
         this._switchChanged();
