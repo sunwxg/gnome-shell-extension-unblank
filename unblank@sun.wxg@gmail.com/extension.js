@@ -5,6 +5,7 @@ const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const St = imports.gi.St;
 const Mainloop = imports.mainloop;
+const Gdk = imports.gi.Gdk;
 
 const Gettext = imports.gettext.domain('gnome-shell-extensions');
 const _ = Gettext.gettext;
@@ -42,6 +43,8 @@ class Unblank {
         this.pauseArrowAnimationOrigin = Main.screenShield._pauseArrowAnimation;
         this.stopArrowAnimationOrigin = Main.screenShield._stopArrowAnimation;
         this.liftShieldOrigin = Main.screenShield._liftShield;
+
+        this._pointerMoved = false;
 
         this.connect_signal();
         this._switchChanged();
@@ -175,6 +178,7 @@ function _liftShield(onPrimary, velocity) {
             if (this._pointerWatchId) {
                 Mainloop.source_remove(this._pointerWatchId);
                 this._pointerWatchId= 0;
+                unblank._pointerMoved = false;
             }
         }
     } else {
@@ -197,12 +201,28 @@ function _startArrowAnimation() {
             this._pauseArrowAnimation.bind(this));
 }
 
+function _movePointer() {
+    if (unblank._pointerMoved)
+        return;
+
+    let primary = Main.layoutManager.primaryMonitor;
+    let display = Gdk.Display.get_default();
+    let deviceManager = display.get_device_manager();
+    let pointer = deviceManager.get_client_pointer();
+
+    let [gdkScreen, x, y] = pointer.get_position();
+
+    pointer.warp(gdkScreen, primary.x + primary.width, primary.y + primary.height);
+    unblank._pointerMoved = true;
+}
+
 function _setPointerVisible() {
     if (this._lockScreenState == MessageTray.State.SHOWN && this._arrowAnimationState == 0) {
         if (!this._motionId)
             this._motionId = global.stage.connect('captured-event', (stage, event) => {
                 if (event.type() == Clutter.EventType.MOTION) {
                     this._cursorTracker.set_pointer_visible(true);
+                    _movePointer();
                     global.stage.disconnect(this._motionId);
                     this._motionId = 0;
                 }
@@ -211,6 +231,7 @@ function _setPointerVisible() {
             });
 
         this._cursorTracker.set_pointer_visible(false);
+        _movePointer();
     }
 
     return GLib.SOURCE_CONTINUE;
@@ -246,6 +267,7 @@ function _stopArrowAnimation() {
     if (this._pointerWatchId) {
         Mainloop.source_remove(this._pointerWatchId);
         this._pointerWatchId= 0;
+        unblank._pointerMoved = false;
     }
 }
 
