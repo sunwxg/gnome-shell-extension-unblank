@@ -6,6 +6,12 @@
       <description>
       </description>
     </key>
+    <key name="time" type="i">
+      <default>0</default>
+      <summary>Time to close monitor</summary>
+      <description>
+      </description>
+    </key>
   </schema>
 </schemalist>
 

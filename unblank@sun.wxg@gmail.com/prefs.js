@@ -15,7 +15,7 @@ function buildPrefsWidget() {
         orientation: Gtk.Orientation.VERTICAL,
         border_width: 10
     });
- 
+
     let vbox = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
         margin: 20, margin_top: 10
@@ -36,8 +36,26 @@ function buildPrefsWidget() {
 
     hbox.pack_start(setting_label, true, true, 0);
     hbox.add(setting_switch);
-
     vbox.add(hbox);
+
+    hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
+    let timebox_label = new Gtk.Label({ label: "Close monitor delay", xalign: 0 });
+    let timebox_comboBox= new Gtk.ComboBoxText();
+    timebox_comboBox.connect('changed',
+                             (box) => { gsettings.set_int('time', Number(box.get_active_id())) });
+
+    timebox_comboBox.append("0", "Never");
+    timebox_comboBox.append("30", "30 minutes");
+    timebox_comboBox.append("60", "60 minutes");
+    timebox_comboBox.append("90", "90 minutes");
+    timebox_comboBox.append("120", "120 minutes");
+
+    timebox_comboBox.set_active_id(gsettings.get_int('time').toString());
+
+    hbox.pack_start(timebox_label, true, true, 0);
+    hbox.add(timebox_comboBox);
+    vbox.add(hbox);
+
     widget.add(vbox);
 
     widget.show_all();
