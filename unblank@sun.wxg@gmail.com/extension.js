@@ -32,9 +32,21 @@ const UPowerIface = '<node> \
 
 const UPowerProxy = Gio.DBusProxy.makeProxyWrapper(UPowerIface);
 
+const BUS_NAME = 'org.gnome.Mutter.DisplayConfig';
+const OBJECT_PATH = '/org/gnome/Mutter/DisplayConfig';
+
+const DisplayConfigIface = '<node> \
+<interface name="org.gnome.Mutter.DisplayConfig"> \
+    <property name="PowerSaveMode" type="i" access="readwrite"/> \
+</interface> \
+</node>';
+
+const DisplayConfigProxy = Gio.DBusProxy.makeProxyWrapper(DisplayConfigIface);
+
 class Unblank {
     constructor() {
         this.gsettings = Convenience.getSettings(SCHEMA_NAME);
+        this._proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH);
 
         this.setActiveOrigin = Main.screenShield._setActive;
         this.activateFadeOrigin = Main.screenShield._activateFade;
@@ -43,6 +55,7 @@ class Unblank {
         this.pauseArrowAnimationOrigin = Main.screenShield._pauseArrowAnimation;
         this.stopArrowAnimationOrigin = Main.screenShield._stopArrowAnimation;
         this.liftShieldOrigin = Main.screenShield._liftShield;
+        this.onUserBecameActiveOrigin = Main.screenShield._onUserBecameActive;
 
         this._pointerMoved = false;
 
@@ -72,6 +85,7 @@ class Unblank {
             Main.screenShield._pauseArrowAnimation = _pauseArrowAnimation;
             Main.screenShield._stopArrowAnimation = _stopArrowAnimation;
             Main.screenShield._liftShield = _liftShield;
+            Main.screenShield._onUserBecameActive = _onUserBecameActive;
         } else {
             Main.screenShield._setActive = this.setActiveOrigin;
             Main.screenShield._activateFade = this.activateFadeOrigin;
@@ -80,6 +94,7 @@ class Unblank {
             Main.screenShield._pauseArrowAnimation = this.pauseArrowAnimationOrigin;
             Main.screenShield._stopArrowAnimation = this.stopArrowAnimationOrigin;
             Main.screenShield._liftShield = this.liftShieldOrigin;
+            Main.screenShield._onUserBecameActive = this.onUserBecameActiveOrigin;
         }
     }
 
@@ -126,6 +141,24 @@ function _activateFade(lightbox, time) {
 
     if (this._becameActiveId == 0)
         this._becameActiveId = this.idleMonitor.add_user_active_watch(this._onUserBecameActive.bind(this))
+}
+
+function  _onUserBecameActive() {
+    this.idleMonitor.remove_watch(this._becameActiveId);
+    this._becameActiveId = 0;
+
+    if (this._isActive || this._isLocked) {
+        this._longLightbox.hide();
+        this._shortLightbox.hide();
+    } else {
+        this.deactivate(false);
+    }
+
+    let timer = unblank.gsettings.get_int('time');
+    if (timer != 0 && this._turnOffMonitorId == 0) {
+        this._turnOffMonitorId = Mainloop.timeout_add(20000, _turnOffMonitor.bind(this));
+        GLib.Source.set_name_by_id(this._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
+    }
 }
 
 function _resetLockScreen(params) {
@@ -189,6 +222,11 @@ function _liftShield(onPrimary, velocity) {
 function _startArrowAnimation() {
     this._arrowActiveWatchId = 0;
     this._arrowAnimationState = 1;
+    if (this._turnOffMonitorId) {
+        Mainloop.source_remove(this._turnOffMonitorId);
+        this._turnOffMonitorId = 0;
+    }
+    _turnOnMonitor();
 
     if (!this._arrowAnimationId) {
         this._arrowAnimationId = Mainloop.timeout_add(6000, this._animateArrows.bind(this));
@@ -237,12 +275,29 @@ function _setPointerVisible() {
     return GLib.SOURCE_CONTINUE;
 }
 
+function _turnOnMonitor() {
+    unblank._proxy.PowerSaveMode = 0;
+}
+
+function _turnOffMonitor() {
+    unblank._proxy.PowerSaveMode = 1;
+
+    this._turnOffMonitorId = 0;
+    return GLib.SOURCE_REMOVE;
+}
+
 function _pauseArrowAnimation() {
     this._arrowAnimationState = 0;
 
     if (this._arrowAnimationId) {
         Mainloop.source_remove(this._arrowAnimationId);
         this._arrowAnimationId = 0;
+    }
+
+    let timer = unblank.gsettings.get_int('time');
+    if (timer != 0 && !this._turnOffMonitorId) {
+        this._turnOffMonitorId = Mainloop.timeout_add(timer * 1000, _turnOffMonitor.bind(this));
+        GLib.Source.set_name_by_id(this._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
     }
 
     if (!this._arrowActiveWatchId)
@@ -268,6 +323,10 @@ function _stopArrowAnimation() {
         Mainloop.source_remove(this._pointerWatchId);
         this._pointerWatchId= 0;
         unblank._pointerMoved = false;
+    }
+    if (this._turnOffMonitorId) {
+        Mainloop.source_remove(this._turnOffMonitorId);
+        this._turnOffMonitorId = 0;
     }
 }
 
