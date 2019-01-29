@@ -76,10 +76,12 @@ class Unblank {
     }
 
     _switchChanged() {
-        this.isUnblank = this.gsettings.get_boolean('switch');
-        this.isOnBattery = (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery );
+        this.isUnblank = (
+            this.gsettings.get_boolean('switch') &&
+            (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery ) === false
+        );
 
-        if (this.isUnblank && this.isOnBattery === false) {
+        if (this.isUnblank) {
             Main.screenShield._setActive = _setActive;
             Main.screenShield._activateFade = _activateFade;
             Main.screenShield._resetLockScreen = _resetLockScreen;
