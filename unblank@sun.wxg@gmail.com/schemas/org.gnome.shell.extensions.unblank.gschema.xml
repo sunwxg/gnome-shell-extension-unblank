@@ -12,6 +12,12 @@
       <description>
       </description>
     </key>
+    <key name="power" type="b">
+      <default>true</default>
+      <summary>Key to switch on power only</summary>
+      <description>
+      </description>
+    </key>
   </schema>
 </schemalist>
 
