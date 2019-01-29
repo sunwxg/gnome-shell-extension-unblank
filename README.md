@@ -8,10 +8,11 @@ After you install extension, the extension will become enable. If you want to di
 
 ```
 make install
-
-relogin OS
 ```
+restart system
 
-From gnome extensions website: https://extensions.gnome.org/extension/1414/unblank/
+### From gnome extensions website
+
+https://extensions.gnome.org/extension/1414/unblank/
 
 ![screenshot](/Screenshot.png)
