@@ -59,24 +59,28 @@ class Unblank {
 
         this._pointerMoved = false;
 
+        this.powerProxy = new UPowerProxy(Gio.DBus.system,
+            'org.freedesktop.UPower',
+            '/org/freedesktop/UPower',
+            (proxy, error) => {
+                if (error) {
+                    log(error.message);
+                    return;
+                }
+                proxy.connect('g-properties-changed', this._switchChanged.bind(this));
+                this.sync();
+            });
+
         this.connect_signal();
         this._switchChanged();
-
-        this.powerProxy = new UPowerProxy(Gio.DBus.system,
-                                'org.freedesktop.UPower',
-                                '/org/freedesktop/UPower',
-                                (proxy, error) => {
-                                    if (error) {
-                                        log(error.message);
-                                        return;
-                                    }
-                                    this.powerProxy.connect('g-properties-changed', () => this.sync());
-                                    this.sync();
-                                });
     }
 
     _switchChanged() {
-        this.isUnblank = this.gsettings.get_boolean('switch');
+        this.isUnblank = (
+            this.gsettings.get_boolean('switch') &&
+            (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery ) === false
+        );
+
         if (this.isUnblank) {
             Main.screenShield._setActive = _setActive;
             Main.screenShield._activateFade = _activateFade;
@@ -99,7 +103,8 @@ class Unblank {
     }
 
     connect_signal() {
-        this.signalSwitchId = this.gsettings.connect("changed::switch", this._switchChanged.bind(this));
+        this.signalPowerId = this.gsettings.connect("changed::switch", this._switchChanged.bind(this));
+        this.signalSwitchId = this.gsettings.connect("changed::power", this._switchChanged.bind(this));
     }
 
     sync() {
