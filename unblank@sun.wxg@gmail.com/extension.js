@@ -67,8 +67,8 @@ class Unblank {
                     log(error.message);
                     return;
                 }
-                proxy.connect('g-properties-changed', this._switchChanged.bind(this));
-                this.sync();
+                proxy.connect('g-properties-changed', this._onPowerChanged.bind(this));
+                this._onPowerChanged();
             });
 
         this.connect_signal();
@@ -76,10 +76,7 @@ class Unblank {
     }
 
     _switchChanged() {
-        this.isUnblank = (
-            this.gsettings.get_boolean('switch') &&
-            (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery ) === false
-        );
+        this.isUnblank = this.gsettings.get_boolean('switch');
 
         if (this.isUnblank) {
             Main.screenShield._setActive = _setActive;
@@ -107,10 +104,15 @@ class Unblank {
         this.signalSwitchId = this.gsettings.connect("changed::power", this._switchChanged.bind(this));
     }
 
-    sync() {
-        //if (Main.screenShield._isActive && powerProxy.OnBattery) {
-        //    Main.screenShield.emit('active-changed');
-        //}
+    _onPowerChanged() {
+        this.isOnBattery = (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery);
+
+        if (Main.screenShield._isActive) {
+            if (this.isOnBattery)
+                _turnOffMonitor();
+            else
+                _turnOnMonitor();
+        }
     }
 }
 
@@ -161,6 +163,9 @@ function  _onUserBecameActive() {
 
     let timer = unblank.gsettings.get_int('time');
     if (timer != 0 && this._turnOffMonitorId == 0) {
+        this._turnOffMonitorId = Mainloop.timeout_add(20000, _turnOffMonitor.bind(this));
+        GLib.Source.set_name_by_id(this._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
+    } else if (unblank.isOnBattery) {
         this._turnOffMonitorId = Mainloop.timeout_add(20000, _turnOffMonitor.bind(this));
         GLib.Source.set_name_by_id(this._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
     }
@@ -255,7 +260,7 @@ function _movePointer() {
 
     let [gdkScreen, x, y] = pointer.get_position();
 
-    pointer.warp(gdkScreen, primary.x + primary.width, primary.y + primary.height);
+    //pointer.warp(gdkScreen, primary.x + primary.width, primary.y + primary.height);
     unblank._pointerMoved = true;
 }
 

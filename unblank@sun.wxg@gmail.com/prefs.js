@@ -39,6 +39,17 @@ function buildPrefsWidget() {
     vbox.add(hbox);
 
     hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
+    let power_setting_label = new Gtk.Label({ label: "Only unblank when on mains power", xalign: 0 });
+    let power_setting_switch = new Gtk.Switch({ active: gsettings.get_boolean('power') });
+
+    power_setting_switch.connect('notify::active',
+                   function (button) { gsettings.set_boolean('power', button.active); });
+
+    hbox.pack_start(power_setting_label, true, true, 0);
+    hbox.add(power_setting_switch);
+    vbox.add(hbox);
+
+    hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
     let timebox_label = new Gtk.Label({ label: "Close monitor delay", xalign: 0 });
     let timebox_comboBox= new Gtk.ComboBoxText();
     timebox_comboBox.connect('changed',
@@ -54,17 +65,6 @@ function buildPrefsWidget() {
 
     hbox.pack_start(timebox_label, true, true, 0);
     hbox.add(timebox_comboBox);
-    vbox.add(hbox);
-
-    hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
-    let power_setting_label = new Gtk.Label({ label: "Only unblank when on mains power", xalign: 0 });
-    let power_setting_switch = new Gtk.Switch({ active: gsettings.get_boolean('power') });
-
-    power_setting_switch.connect('notify::active',
-                   function (button) { gsettings.set_boolean('power', button.active); });
-
-    hbox.pack_start(power_setting_label, true, true, 0);
-    hbox.add(power_setting_switch);
     vbox.add(hbox);
 
     widget.add(vbox);
