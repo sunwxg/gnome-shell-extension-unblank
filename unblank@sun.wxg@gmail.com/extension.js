@@ -306,7 +306,7 @@ function _pauseArrowAnimation() {
 
     let timer = unblank.gsettings.get_int('time');
     if (timer != 0 && !this._turnOffMonitorId) {
-        this._turnOffMonitorId = Mainloop.timeout_add(timer * 1000, _turnOffMonitor.bind(this));
+        this._turnOffMonitorId = Mainloop.timeout_add_seconds(timer, _turnOffMonitor.bind(this));
         GLib.Source.set_name_by_id(this._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
     }
 
