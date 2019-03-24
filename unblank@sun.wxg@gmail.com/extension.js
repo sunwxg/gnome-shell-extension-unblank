@@ -23,6 +23,7 @@ const ScreenShield = imports.ui.screenShield;
 const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 const MANUAL_FADE_TIME = 0.3;
 const ARROW_IDLE_TIME = 30000; // ms
+const STANDARD_FADE_TIME = 10;
 
 const UPowerIface = '<node> \
 <interface name="org.freedesktop.UPower"> \
@@ -58,6 +59,7 @@ class Unblank {
         this.onUserBecameActiveOrigin = Main.screenShield._onUserBecameActive;
 
         this._pointerMoved = false;
+        this.hideLightboxId = 0;
 
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
             'org.freedesktop.UPower',
@@ -140,11 +142,14 @@ function _setActive(active) {
 function _activateFade(lightbox, time) {
     Main.uiGroup.set_child_above_sibling(lightbox.actor, null);
     if (unblank.isUnblank) {
-        if (lightbox != this._longLightbox)
-            lightbox.show(time);
+        lightbox.show(time);
     } else {
         lightbox.show(time);
     }
+
+    unblank.hideLightboxId = Mainloop.timeout_add(STANDARD_FADE_TIME * 1000,
+                                                  () => { lightbox.hide();
+                                                          return GLib.SOURCE_REMOVE; });
 
     if (this._becameActiveId == 0)
         this._becameActiveId = this.idleMonitor.add_user_active_watch(this._onUserBecameActive.bind(this))
@@ -153,6 +158,11 @@ function _activateFade(lightbox, time) {
 function  _onUserBecameActive() {
     this.idleMonitor.remove_watch(this._becameActiveId);
     this._becameActiveId = 0;
+
+    if (unblank.hideLightboxId != 0) {
+        Mainloop.source_remove(unblank.hideLightboxId);
+        unblank.hideLightboxId= 0;
+    }
 
     if (this._isActive || this._isLocked) {
         this._longLightbox.hide();
@@ -340,7 +350,7 @@ function _stopArrowAnimation() {
     }
 }
 
-let unblank;
+var unblank;
 
 function init() {
     unblank = new Unblank();
