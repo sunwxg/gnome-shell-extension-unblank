@@ -141,15 +141,12 @@ function _setActive(active) {
 
 function _activateFade(lightbox, time) {
     Main.uiGroup.set_child_above_sibling(lightbox.actor, null);
-    if (unblank.isUnblank) {
+    if (unblank.isUnblank && !this._isActive) {
         lightbox.show(time);
-    } else {
-        lightbox.show(time);
+        unblank.hideLightboxId = Mainloop.timeout_add(STANDARD_FADE_TIME * 1000,
+                                                      () => { lightbox.hide();
+                                                              return GLib.SOURCE_REMOVE; });
     }
-
-    unblank.hideLightboxId = Mainloop.timeout_add(STANDARD_FADE_TIME * 1000,
-                                                  () => { lightbox.hide();
-                                                          return GLib.SOURCE_REMOVE; });
 
     if (this._becameActiveId == 0)
         this._becameActiveId = this.idleMonitor.add_user_active_watch(this._onUserBecameActive.bind(this))
