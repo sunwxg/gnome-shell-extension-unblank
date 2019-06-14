@@ -47,7 +47,6 @@ const DisplayConfigProxy = Gio.DBusProxy.makeProxyWrapper(DisplayConfigIface);
 class Unblank {
     constructor() {
         this.gsettings = Convenience.getSettings(SCHEMA_NAME);
-        this._proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH);
 
         this.setActiveOrigin = Main.screenShield._setActive;
         this.activateFadeOrigin = Main.screenShield._activateFade;
@@ -99,6 +98,10 @@ class Unblank {
             Main.screenShield._liftShield = this.liftShieldOrigin;
             Main.screenShield._onUserBecameActive = this.onUserBecameActiveOrigin;
         }
+    }
+
+    getProxy() {
+        this.proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH);
     }
 
     connect_signal() {
@@ -293,11 +296,15 @@ function _setPointerVisible() {
 }
 
 function _turnOnMonitor() {
-    unblank._proxy.PowerSaveMode = 0;
+    if (!unblank.proxy)
+        unblank.getProxy();
+    unblank.proxy.PowerSaveMode = 0;
 }
 
 function _turnOffMonitor() {
-    unblank._proxy.PowerSaveMode = 1;
+    if (!unblank.proxy)
+        unblank.getProxy();
+    unblank.proxy.PowerSaveMode = 1;
 
     this._turnOffMonitorId = 0;
     return GLib.SOURCE_REMOVE;
