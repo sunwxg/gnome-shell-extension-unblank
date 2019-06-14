@@ -47,6 +47,7 @@ const DisplayConfigProxy = Gio.DBusProxy.makeProxyWrapper(DisplayConfigIface);
 class Unblank {
     constructor() {
         this.gsettings = Convenience.getSettings(SCHEMA_NAME);
+        this.proxy = getProxy();
 
         this.setActiveOrigin = Main.screenShield._setActive;
         this.activateFadeOrigin = Main.screenShield._activateFade;
@@ -100,10 +101,6 @@ class Unblank {
         }
     }
 
-    getProxy() {
-        this.proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH);
-    }
-
     connect_signal() {
         this.signalPowerId = this.gsettings.connect("changed::switch", this._switchChanged.bind(this));
         this.signalSwitchId = this.gsettings.connect("changed::power", this._switchChanged.bind(this));
@@ -119,6 +116,11 @@ class Unblank {
                 _turnOnMonitor();
         }
     }
+}
+
+async function getProxy() {
+    let proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH);
+    return proxy;
 }
 
 function _setActive(active) {
@@ -296,14 +298,10 @@ function _setPointerVisible() {
 }
 
 function _turnOnMonitor() {
-    if (!unblank.proxy)
-        unblank.getProxy();
     unblank.proxy.PowerSaveMode = 0;
 }
 
 function _turnOffMonitor() {
-    if (!unblank.proxy)
-        unblank.getProxy();
     unblank.proxy.PowerSaveMode = 1;
 
     this._turnOffMonitorId = 0;
