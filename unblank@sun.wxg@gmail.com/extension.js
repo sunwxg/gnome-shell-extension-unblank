@@ -47,7 +47,7 @@ const DisplayConfigProxy = Gio.DBusProxy.makeProxyWrapper(DisplayConfigIface);
 class Unblank {
     constructor() {
         this.gsettings = Convenience.getSettings(SCHEMA_NAME);
-        this.proxy = getProxy();
+        this.proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH, () => {});
 
         this.setActiveOrigin = Main.screenShield._setActive;
         this.activateFadeOrigin = Main.screenShield._activateFade;
@@ -116,11 +116,6 @@ class Unblank {
                 _turnOnMonitor();
         }
     }
-}
-
-async function getProxy() {
-    let proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH);
-    return proxy;
 }
 
 function _setActive(active) {
