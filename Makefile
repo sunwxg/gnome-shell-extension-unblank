@@ -6,5 +6,6 @@ submit: schemas
 
 install:
 	rm -rf ~/.local/share/gnome-shell/extensions/unblank@sun.wxg@gmail.com
-	cp -r unblank@sun.wxg@gmail.com ~/.local/share/gnome-shell/extensions/
+	mkdir -p ~/.local/share/gnome-shell/extensions/unblank@sun.wxg@gmail.com
+	cp -r unblank@sun.wxg@gmail.com/* ~/.local/share/gnome-shell/extensions/unblank@sun.wxg@gmail.com/
 
