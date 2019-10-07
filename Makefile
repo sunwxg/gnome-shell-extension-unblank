@@ -1,11 +1,17 @@
+ifeq ($(strip $(DESTDIR)),)
+	INSTALLBASE = $(HOME)/.local/share/gnome-shell/extensions
+else
+	SHARE_PREFIX = $(DESTDIR)/usr/share
+	INSTALLBASE = $(SHARE_PREFIX)/gnome-shell/extensions
+endif
+INSTALLNAME=unblank@sun.wxg@gmail.com
 
 schemas:
-	glib-compile-schemas unblank@sun.wxg@gmail.com/schemas/
+	glib-compile-schemas $(INSTALLNAME)/schemas/
 submit: schemas
-	cd unblank@sun.wxg@gmail.com/ && zip -r ~/unblank.zip *
+	cd $(INSTALLNAME)/ && zip -r ~/unblank.zip *
 
 install:
-	rm -rf ~/.local/share/gnome-shell/extensions/unblank@sun.wxg@gmail.com
-	mkdir -p ~/.local/share/gnome-shell/extensions/unblank@sun.wxg@gmail.com
-	cp -r unblank@sun.wxg@gmail.com/* ~/.local/share/gnome-shell/extensions/unblank@sun.wxg@gmail.com/
-
+	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
+	mkdir -p $(INSTALLBASE)/$(INSTALLNAME)
+	cp -r $(INSTALLNAME)/* $(INSTALLBASE)/$(INSTALLNAME)/
