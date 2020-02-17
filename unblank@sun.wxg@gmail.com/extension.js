@@ -23,7 +23,6 @@ const ScreenShield = imports.ui.screenShield;
 const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 const MANUAL_FADE_TIME = 0.3;
 const ARROW_IDLE_TIME = 30000; // ms
-const STANDARD_FADE_TIME = 10;
 
 const UPowerIface = '<node> \
 <interface name="org.freedesktop.UPower"> \
@@ -143,7 +142,7 @@ function _activateFade(lightbox, time) {
     Main.uiGroup.set_child_above_sibling(lightbox.actor, null);
     if (unblank.isUnblank && !this._isActive) {
         lightbox.show(time);
-        unblank.hideLightboxId = Mainloop.timeout_add(STANDARD_FADE_TIME * 1000,
+        unblank.hideLightboxId = Mainloop.timeout_add(unblank.gsettings.get_int('fade') * 1000,
                                                       () => { lightbox.hide();
                                                               return GLib.SOURCE_REMOVE; });
     }
