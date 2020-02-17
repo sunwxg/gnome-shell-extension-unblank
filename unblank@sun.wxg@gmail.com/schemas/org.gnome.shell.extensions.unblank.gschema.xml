@@ -18,6 +18,12 @@
       <description>
       </description>
     </key>
+    <key name="fade" type="i">
+      <default>1</default>
+      <summary>Fade time</summary>
+      <description>
+      </description>
+    </key>
   </schema>
 </schemalist>
 
