@@ -49,6 +49,18 @@ function buildPrefsWidget() {
     hbox.add(power_setting_switch);
     vbox.add(hbox);
 
+    // FADE TIME ADJUST
+    hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5});
+    let fade_time_label = new Gtk.Label({ label: "Adjust seconds for animation fade before unblanking\n(Increase if screensaver never starts)", xalign: 0});
+    let fade_time_value = Gtk.SpinButton.new_with_range(1, 20, 1);
+    fade_time_value.set_value(gsettings.get_int('fade'))
+    fade_time_value.connect('value-changed',
+                            function (button) { gsettings.set_int('fade', button.get_value()); });
+
+    hbox.pack_start(fade_time_label, true, true, 0);
+    hbox.add(fade_time_value);
+    vbox.add(hbox)
+
     hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
     let timebox_label = new Gtk.Label({ label: "Close monitor delay", xalign: 0 });
     let timebox_comboBox= new Gtk.ComboBoxText();
@@ -67,8 +79,8 @@ function buildPrefsWidget() {
     hbox.add(timebox_comboBox);
     vbox.add(hbox);
 
-    widget.add(vbox);
 
+    widget.add(vbox);
     widget.show_all();
     return widget;
 }
