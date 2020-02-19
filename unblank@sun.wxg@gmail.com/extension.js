@@ -143,7 +143,7 @@ function _activateFade(lightbox, time) {
     Main.uiGroup.set_child_above_sibling(lightbox.actor, null);
     if (unblank.isUnblank && !this._isActive) {
         lightbox.show(time);
-        unblank.hideLightboxId = Mainloop.timeout_add(STANDARD_FADE_TIME * 1000,
+        unblank.hideLightboxId = Mainloop.timeout_add(time + 1000,
                                                       () => { lightbox.hide();
                                                               return GLib.SOURCE_REMOVE; });
     }
