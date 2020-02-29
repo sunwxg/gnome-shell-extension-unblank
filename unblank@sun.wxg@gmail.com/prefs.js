@@ -39,7 +39,7 @@ function buildPrefsWidget() {
     vbox.add(hbox);
 
     hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
-    let power_setting_label = new Gtk.Label({ label: "Only unblank when on mains power", xalign: 0 });
+    let power_setting_label = new Gtk.Label({ label: "Only unblank when on main power", xalign: 0 });
     let power_setting_switch = new Gtk.Switch({ active: gsettings.get_boolean('power') });
 
     power_setting_switch.connect('notify::active',
