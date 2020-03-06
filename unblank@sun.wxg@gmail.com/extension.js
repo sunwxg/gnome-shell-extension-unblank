@@ -58,6 +58,7 @@ class Unblank {
 
         this._pointerMoved = false;
         this.hideLightboxId = 0;
+        this.inLock = false;
 
         //this.powerProxy = new PowerManagerProxy(Gio.DBus.system, UPOWER_BUS_NAME, UPOWER_OBJECT_PATH,
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
@@ -112,6 +113,7 @@ class Unblank {
 function _setActive(active) {
     let prevIsActive = this._isActive;
     this._isActive = active;
+    unblank.inLock = active;
 
     if (prevIsActive != this._isActive) {
         if (!unblank.isUnblank) {
@@ -126,6 +128,9 @@ function _setActive(active) {
 }
 
 function _activateFade(lightbox, time) {
+    if (unblank.inLock)
+        return;
+
     Main.uiGroup.set_child_above_sibling(lightbox, null);
     if (unblank.isUnblank && !this._isActive) {
         lightbox.lightOn(time);
