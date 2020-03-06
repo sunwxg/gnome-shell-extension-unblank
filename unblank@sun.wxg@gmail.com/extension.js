@@ -204,21 +204,6 @@ function _resetLockScreen(params) {
     this._dialog.grab_key_focus();
 }
 
-function _movePointer() {
-    if (unblank._pointerMoved)
-        return;
-
-    let primary = Main.layoutManager.primaryMonitor;
-    let display = Gdk.Display.get_default();
-    let deviceManager = display.get_device_manager();
-    let pointer = deviceManager.get_client_pointer();
-
-    let [gdkScreen, x, y] = pointer.get_position();
-
-    //pointer.warp(gdkScreen, primary.x + primary.width, primary.y + primary.height);
-    unblank._pointerMoved = true;
-}
-
 function _turnOnMonitor() {
     unblank.proxy.PowerSaveMode = 0;
 }
