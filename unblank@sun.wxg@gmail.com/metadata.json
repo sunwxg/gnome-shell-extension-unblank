@@ -1,5 +1,5 @@
 {
-  "description": "Unblank lock screen. \n\n After you install this extension, the extension will be enable by default. If you want to disable this extension, you need to delete this extension or go to this extension settings to turn off switch.", 
+  "description": "Unblank lock screen. \n\n After you install this extension, the extension will be enabled by default. If you want to disable this extension, you need to delete this extension or go to this extension settings to turn off switch.", 
   "name": "Unblank lock screen",
   "original-authors": "sun.wxg@gmail.com",
   "shell-version": [
