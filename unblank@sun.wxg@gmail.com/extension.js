@@ -140,6 +140,7 @@ function _activateFade(lightbox, time) {
         unblank.hideLightboxId = Mainloop.timeout_add(time + 1000,
                                                       () => { lightbox.lightOff();
                                                               _activateTimer();
+                                                              unblank.hideLightboxId = 0;
                                                               return GLib.SOURCE_REMOVE; });
     } else {
         lightbox.lightOn(time);
@@ -161,6 +162,7 @@ function  _onUserBecameActive() {
         Mainloop.source_remove(unblank._turnOffMonitorId);
         unblank._turnOffMonitorId = 0;
     }
+    _turnOnMonitor();
 
     if (this._isActive || this._isLocked) {
         this._longLightbox.lightOff();
@@ -206,7 +208,11 @@ function _resetLockScreen(params) {
 function _activateTimer() {
     let timer = unblank.gsettings.get_int('time');
     if (timer != 0 && unblank._turnOffMonitorId == 0) {
-        unblank._turnOffMonitorId = Mainloop.timeout_add(timer * 1000, _turnOffMonitor.bind(this));
+        unblank._turnOffMonitorId = Mainloop.timeout_add_seconds(timer, () => {
+            _turnOffMonitor();
+            unblank._turnOffMonitorId = 0;
+            return GLib.SOURCE_REMOVE;
+        });
         GLib.Source.set_name_by_id(unblank._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
     } else if (unblank.isOnBattery) {
         _turnOffMonitor();
@@ -219,9 +225,6 @@ function _turnOnMonitor() {
 
 function _turnOffMonitor() {
     unblank.proxy.PowerSaveMode = 1;
-
-    unblank._turnOffMonitorId = 0;
-    return GLib.SOURCE_REMOVE;
 }
 
 var unblank;
