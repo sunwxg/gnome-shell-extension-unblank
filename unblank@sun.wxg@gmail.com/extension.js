@@ -131,6 +131,10 @@ function _setActive(active) {
             unblank._activeOnce = false;
         }
     }
+    if (active)
+        _activateTimer();
+    else
+        _deactiveTimer();
 
     if (this._loginSession)
         this._loginSession.SetLockedHintRemote(active);
@@ -168,10 +172,7 @@ function  _onUserBecameActive() {
         Mainloop.source_remove(unblank.hideLightboxId);
         unblank.hideLightboxId= 0;
     }
-    if (unblank._turnOffMonitorId != 0) {
-        Mainloop.source_remove(unblank._turnOffMonitorId);
-        unblank._turnOffMonitorId = 0;
-    }
+    _deactiveTimer();
     _turnOnMonitor();
 
     if (this._isActive || this._isLocked) {
@@ -183,6 +184,7 @@ function  _onUserBecameActive() {
 }
 
 function _resetLockScreen(params) {
+    _activateTimer();
     if (this._lockScreenState != MessageTray.State.HIDDEN)
         return;
 
@@ -216,14 +218,22 @@ function _resetLockScreen(params) {
 }
 
 function _activateTimer() {
+    _deactiveTimer();
     let timer = unblank.gsettings.get_int('time');
-    if (timer != 0 && unblank._turnOffMonitorId == 0) {
+    if (timer != 0) {
         unblank._turnOffMonitorId = Mainloop.timeout_add_seconds(timer, () => {
             _turnOffMonitor();
             unblank._turnOffMonitorId = 0;
             return GLib.SOURCE_REMOVE;
         });
         GLib.Source.set_name_by_id(unblank._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
+    }
+}
+
+function _deactiveTimer() {
+    if (unblank._turnOffMonitorId != 0) {
+        Mainloop.source_remove(unblank._turnOffMonitorId);
+        unblank._turnOffMonitorId = 0;
     }
 }
 
