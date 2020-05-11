@@ -22,12 +22,9 @@ function buildPrefsWidget() {
     });
     vbox.set_size_request(550, 350);
 
-    addBoldTextToBox("Enable and disable unblank function", vbox);
-    vbox.add(new Gtk.HSeparator({margin_bottom: 5, margin_top: 5}));
-
     let hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
 
-    let setting_label = new Gtk.Label({ label: "Open Unblank", xalign: 0 });
+    let setting_label = new Gtk.Label({ label: "Enable Unblank", xalign: 0 });
 
     let setting_switch = new Gtk.Switch({ active: gsettings.get_boolean('switch') });
 
