@@ -60,6 +60,7 @@ class Unblank {
         this.hideLightboxId = 0;
         this._turnOffMonitorId = 0;
         this.inLock = false;
+        this._activeOnce = false;
 
         //this.powerProxy = new PowerManagerProxy(Gio.DBus.system, UPOWER_BUS_NAME, UPOWER_OBJECT_PATH,
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
@@ -79,9 +80,9 @@ class Unblank {
     }
 
     _switchChanged() {
-        this.isUnblank = this.gsettings.get_boolean('switch');
+        this.unblankSwitch = this.gsettings.get_boolean('switch');
 
-        if (this.isUnblank) {
+        if (this.unblankSwitch) {
             Main.screenShield._setActive = _setActive;
             Main.screenShield._activateFade = _activateFade;
             Main.screenShield._resetLockScreen = _resetLockScreen;
@@ -99,13 +100,21 @@ class Unblank {
         this.signalSwitchId = this.gsettings.connect("changed::power", this._switchChanged.bind(this));
     }
 
+    isUnblank() {
+        this.isOnBattery = (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery);
+        return this.unblankSwitch && !this.isOnBattery;
+    }
+
     _onPowerChanged() {
         this.isOnBattery = (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery);
 
         if (Main.screenShield._isActive) {
-            if (this.isOnBattery)
-                _turnOffMonitor();
-            else
+            if (this.isOnBattery) {
+                Main.screenShield.emit('active-changed');
+                Main.screenShield.activate(false);
+                this._activeOnce = true;
+                //_turnOffMonitor();
+            } else
                 _turnOnMonitor();
         }
     }
@@ -117,8 +126,9 @@ function _setActive(active) {
     unblank.inLock = active;
 
     if (prevIsActive != this._isActive) {
-        if (!unblank.isUnblank) {
+        if (!unblank.isUnblank() || unblank._activeOnce) {
             this.emit('active-changed');
+            unblank._activeOnce = false;
         }
     }
 
@@ -135,7 +145,7 @@ function _activateFade(lightbox, time) {
     }
 
     Main.uiGroup.set_child_above_sibling(lightbox, null);
-    if (unblank.isUnblank && !this._isActive) {
+    if (unblank.isUnblank() && !this._isActive) {
         lightbox.lightOn(time);
         unblank.hideLightboxId = Mainloop.timeout_add(time + 1000,
                                                       () => { lightbox.lightOff();
@@ -180,7 +190,7 @@ function _resetLockScreen(params) {
     this._lockScreenState = MessageTray.State.SHOWING;
 
     let fadeToBlack;
-    if (unblank.isUnblank) {
+    if (unblank.isUnblank()) {
         fadeToBlack = false;
     } else {
         fadeToBlack = params.fadeToBlack;
@@ -214,8 +224,6 @@ function _activateTimer() {
             return GLib.SOURCE_REMOVE;
         });
         GLib.Source.set_name_by_id(unblank._turnOffMonitorId, '[gnome-shell] this._turnOffMonitor');
-    } else if (unblank.isOnBattery) {
-        _turnOffMonitor();
     }
 }
 
