@@ -177,9 +177,8 @@ function  _onUserBecameActive() {
         Mainloop.source_remove(unblank.hideLightboxId);
         unblank.hideLightboxId= 0;
     }
-    _activateTimer();
     //_deactiveTimer();
-    _turnOnMonitor();
+    //_turnOnMonitor();
 
     if (this._isActive || this._isLocked) {
         this._longLightbox.lightOff();
