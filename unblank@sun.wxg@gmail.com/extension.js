@@ -61,7 +61,6 @@ class Unblank {
         this._turnOffMonitorId = 0;
         this.inLock = false;
         this._activeOnce = false;
-        this._becameActiveId = 0;
 
         //this.powerProxy = new PowerManagerProxy(Gio.DBus.system, UPOWER_BUS_NAME, UPOWER_OBJECT_PATH,
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
@@ -136,9 +135,6 @@ function _setActive(active) {
         _activateTimer();
     } else {
         _deactiveTimer();
-        if (unblank._becameActiveId != 0)
-            this.idleMonitor.remove_watch(unblank._becameActiveId);
-        unblank._becameActiveId = 0;
     }
 
     if (this._loginSession)
@@ -222,9 +218,7 @@ function _resetLockScreen(params) {
     this._dialog.grab_key_focus();
 }
 
-function _userActive() {
-    Main.screenShield.idleMonitor.remove_watch(unblank._becameActiveId);
-    unblank._becameActiveId = 0;
+function _changeToBlank() {
     if (!unblank._activeOnce) {
         Main.screenShield.emit('active-changed');
         unblank._activeOnce = true;
@@ -236,9 +230,8 @@ function _activateTimer() {
     let timer = unblank.gsettings.get_int('time');
     if (timer != 0) {
         unblank._turnOffMonitorId = Mainloop.timeout_add_seconds(timer, () => {
-            if (unblank._becameActiveId == 0)
-                unblank._becameActiveId = Main.screenShield.idleMonitor.add_user_active_watch(_userActive.bind(this));
-            _turnOffMonitor();
+            _changeToBlank();
+            //_turnOffMonitor();
             unblank._turnOffMonitorId = 0;
             return GLib.SOURCE_REMOVE;
         });
