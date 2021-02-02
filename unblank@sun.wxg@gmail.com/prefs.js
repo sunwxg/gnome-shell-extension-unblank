@@ -36,7 +36,7 @@ function buildPrefsWidget() {
     vbox.add(hbox);
 
     hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
-    let power_setting_label = new Gtk.Label({ label: "Only unblank when on main power", xalign: 0 });
+    let power_setting_label = new Gtk.Label({ label: "Only unblank when on AC", xalign: 0 });
     let power_setting_switch = new Gtk.Switch({ active: gsettings.get_boolean('power') });
 
     power_setting_switch.connect('notify::active',
@@ -47,7 +47,7 @@ function buildPrefsWidget() {
     vbox.add(hbox);
 
     hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
-    let timebox_label = new Gtk.Label({ label: "Close monitor delay", xalign: 0 });
+    let timebox_label = new Gtk.Label({ label: "Timeout to blank after locking the screen", xalign: 0 });
     let timebox_comboBox= new Gtk.ComboBoxText();
     timebox_comboBox.connect('changed',
                              (box) => { gsettings.set_int('time', Number(box.get_active_id())) });
