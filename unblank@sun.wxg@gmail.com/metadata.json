@@ -3,7 +3,7 @@
   "name": "Unblank lock screen",
   "original-authors": "sun.wxg@gmail.com",
   "shell-version": [
-    "3.36", "3.38"
+    "40"
   ],
   "url": "https://github.com/sunwxg/gnome-shell-extension-unblank",
   "uuid": "unblank@sun.wxg@gmail.com"
