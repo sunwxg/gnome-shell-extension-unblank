@@ -1,13 +1,13 @@
 const Gtk = imports.gi.Gtk;
 
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 let gsettings;
 
 const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 
 function init() {
-    gsettings = Convenience.getSettings(SCHEMA_NAME);
+    gsettings = ExtensionUtils.getSettings(SCHEMA_NAME);
 }
 
 function buildPrefsWidget() {

@@ -16,7 +16,6 @@ const MessageTray = imports.ui.messageTray;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
 
 const ScreenShield = imports.ui.screenShield;
 
@@ -47,7 +46,7 @@ const DisplayConfigProxy = Gio.DBusProxy.makeProxyWrapper(DisplayConfigIface);
 
 class Unblank {
     constructor() {
-        this.gsettings = Convenience.getSettings(SCHEMA_NAME);
+        this.gsettings = ExtensionUtils.getSettings(SCHEMA_NAME);
         this.proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH, () => {});
 
         this.setActiveOrigin = Main.screenShield._setActive;
