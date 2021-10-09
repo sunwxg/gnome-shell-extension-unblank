@@ -59,6 +59,7 @@ class Unblank {
         this._turnOffMonitorId = 0;
         this.inLock = false;
         this._activeOnce = false;
+        this.enabled = false;
 
         //this.powerProxy = new PowerManagerProxy(Gio.DBus.system, UPOWER_BUS_NAME, UPOWER_OBJECT_PATH,
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
@@ -72,35 +73,27 @@ class Unblank {
                                                     this.powerProxy.connect('g-properties-changed',
                                                                             this._onPowerChanged.bind(this));
                                                     this._onPowerChanged(); });
-
-        this.connect_signal();
-        this._switchChanged();
     }
 
-    _switchChanged() {
-        this.unblankSwitch = this.gsettings.get_boolean('switch');
-
-        if (this.unblankSwitch) {
-            Main.screenShield._setActive = _setActive;
-            Main.screenShield._activateFade = _activateFade;
-            Main.screenShield._resetLockScreen = _resetLockScreen;
-            Main.screenShield._onUserBecameActive = _onUserBecameActive;
-        } else {
-            Main.screenShield._setActive = this.setActiveOrigin;
-            Main.screenShield._activateFade = this.activateFadeOrigin;
-            Main.screenShield._resetLockScreen = this.resetLockScreenOrigin;
-            Main.screenShield._onUserBecameActive = this.onUserBecameActiveOrigin;
-        }
+    enable() {
+        Main.screenShield._setActive = _setActive;
+        Main.screenShield._activateFade = _activateFade;
+        Main.screenShield._resetLockScreen = _resetLockScreen;
+        Main.screenShield._onUserBecameActive = _onUserBecameActive;
+        this.enabled = true;
     }
 
-    connect_signal() {
-        this.signalPowerId = this.gsettings.connect("changed::switch", this._switchChanged.bind(this));
-        this.signalSwitchId = this.gsettings.connect("changed::power", this._switchChanged.bind(this));
+    disable() {
+        Main.screenShield._setActive = this.setActiveOrigin;
+        Main.screenShield._activateFade = this.activateFadeOrigin;
+        Main.screenShield._resetLockScreen = this.resetLockScreenOrigin;
+        Main.screenShield._onUserBecameActive = this.onUserBecameActiveOrigin;
+        this.enabled = false;
     }
 
     isUnblank() {
         this.isOnBattery = (this.gsettings.get_boolean('power') && this.powerProxy.OnBattery);
-        return this.unblankSwitch && !this.isOnBattery;
+        return !this.isOnBattery;
     }
 
     _onPowerChanged() {
@@ -259,7 +252,13 @@ function init() {
 }
 
 function enable() {
+    if (unblank.enabled)
+        return;
+    unblank.enable();
 }
 
 function disable() {
+    if (!Main.sessionMode.isLocked) {
+        unblank.disable();
+    }
 }

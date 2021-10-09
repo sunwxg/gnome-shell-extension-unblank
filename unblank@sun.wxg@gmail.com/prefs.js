@@ -25,26 +25,6 @@ function buildPrefsWidget() {
     });
     vbox.set_size_request(550, 350);
 
-    let hbox = new Gtk.Box({ 
-        orientation: Gtk.Orientation.HORIZONTAL,
-        margin_top: 5 });
-
-    let setting_label = new Gtk.Label({ label: "Enable Unblank",
-        xalign: 0,
-        hexpand: true
-    });
-
-    let setting_switch = new Gtk.Switch({
-        active: gsettings.get_boolean('switch'),
-    });
-
-    setting_switch.connect('notify::active',
-                   function (button) { gsettings.set_boolean('switch', button.active); });
-
-    hbox.append(setting_label);
-    hbox.append(setting_switch);
-    vbox.append(hbox);
-
     hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
     let power_setting_label = new Gtk.Label({ label: "Only unblank when on AC",
         hexpand: true,
