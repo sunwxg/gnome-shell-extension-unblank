@@ -246,19 +246,24 @@ function _turnOffMonitor() {
 }
 
 var unblank;
+var enabled;
 
 function init() {
-    unblank = new Unblank();
+    enabled = false;
 }
 
 function enable() {
-    if (unblank.enabled)
+    if (enabled)
         return;
+    unblank = new Unblank();
     unblank.enable();
+    enabled = true;
 }
 
 function disable() {
     if (!Main.sessionMode.isLocked) {
         unblank.disable();
+        unblank = null;
+        enabled = false;
     }
 }
