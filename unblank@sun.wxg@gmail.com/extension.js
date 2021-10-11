@@ -246,10 +246,9 @@ function _turnOffMonitor() {
 }
 
 var unblank;
-var enabled;
+var enabled = false;
 
 function init() {
-    enabled = false;
 }
 
 function enable() {
