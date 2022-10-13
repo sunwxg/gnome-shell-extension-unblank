@@ -47,6 +47,7 @@ function buildPrefsWidget() {
                              (box) => { gsettings.set_int('time', Number(box.get_active_id())) });
 
     timebox_comboBox.append("0", "Never");
+    timebox_comboBox.append("300", "5 minutes");
     timebox_comboBox.append("1800", "30 minutes");
     timebox_comboBox.append("3600", "60 minutes");
     timebox_comboBox.append("5400", "90 minutes");
