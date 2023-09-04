@@ -1,13 +1,13 @@
 {
-  "description": "Unblank lock screen.",
+  "uuid": "unblank@sun.wxg@gmail.com",
+  "extension-id": "unblank",
+  "settings-schema": "org.gnome.shell.extensions.unblank",
+  "gettext-domain": "gnome-shell-extensions",
   "name": "Unblank lock screen",
-  "original-authors": "sun.wxg@gmail.com",
+  "description": "Unblank lock screen.",
   "shell-version": [
-    "41",
-    "42",
-    "43",
-    "44"
+    "45"
   ],
-  "url": "https://github.com/sunwxg/gnome-shell-extension-unblank",
-  "uuid": "unblank@sun.wxg@gmail.com"
+  "original-authors": "sun.wxg@gmail.com",
+  "url": "https://github.com/sunwxg/gnome-shell-extension-unblank"
 }

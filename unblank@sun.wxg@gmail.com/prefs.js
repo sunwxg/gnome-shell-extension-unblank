@@ -1,16 +1,10 @@
-const Gtk = imports.gi.Gtk;
+import Gtk from 'gi://Gtk';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-let gsettings;
+import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 
-function init() {
-    gsettings = ExtensionUtils.getSettings(SCHEMA_NAME);
-}
-
-function buildPrefsWidget() {
+function buildPrefsWidget(gsettings) {
     let widget = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
         margin_top: 10,
@@ -25,7 +19,7 @@ function buildPrefsWidget() {
     });
     vbox.set_size_request(550, 350);
 
-    hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
+    let hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
     let power_setting_label = new Gtk.Label({ label: "Only unblank when on AC",
         hexpand: true,
         xalign: 0 });
@@ -71,4 +65,10 @@ function addBoldTextToBox(text, box) {
     txt.set_markup('<b>' + text + '</b>');
     txt.set_line_wrap(true);
     box.append(txt);
+}
+
+export default class UnblankPrefs extends ExtensionPreferences {
+    getPreferencesWidget() {
+        return buildPrefsWidget(this.getSettings());
+    }
 }

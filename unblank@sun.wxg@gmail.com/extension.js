@@ -1,32 +1,25 @@
 // -*- mode: js2; indent-tabs-mode: nil; js2-basic-offset: 4 -*-
+//
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Gdk from 'gi://Gdk';
+import St from 'gi://St';
+import UPower from 'gi://UPowerGlib';
 
-const Gio = imports.gi.Gio;
-const Clutter = imports.gi.Clutter;
-const GLib = imports.gi.GLib;
-const St = imports.gi.St;
-const Mainloop = imports.mainloop;
-const Gdk = imports.gi.Gdk;
-const Overview = imports.ui.overview;
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Gettext = imports.gettext.domain('gnome-shell-extensions');
-const _ = Gettext.gettext;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as Overview from 'resource:///org/gnome/shell/ui/overview.js';
+import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js';
 
-const Main = imports.ui.main;
-const MessageTray = imports.ui.messageTray;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-const ScreenShield = imports.ui.screenShield;
-
-const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 const MANUAL_FADE_TIME = 0.3;
 const STANDARD_FADE_TIME = 10;
 
-const { UPowerGlib: UPower } = imports.gi;
 const UPOWER_BUS_NAME = 'org.freedesktop.UPower';
 const UPOWER_OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice';
-const { loadInterfaceXML } = imports.misc.fileUtils;
 const DisplayDeviceInterface = loadInterfaceXML('org.freedesktop.UPower.Device');
 const PowerManagerProxy = Gio.DBusProxy.makeProxyWrapper(DisplayDeviceInterface);
 
@@ -45,8 +38,8 @@ const DisplayConfigIface = '<node> \
 const DisplayConfigProxy = Gio.DBusProxy.makeProxyWrapper(DisplayConfigIface);
 
 class Unblank {
-    constructor() {
-        this.gsettings = ExtensionUtils.getSettings(SCHEMA_NAME);
+    constructor(settings) {
+        this.gsettings = settings;
         this.proxy = new DisplayConfigProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH, () => {});
 
         this.setActiveOrigin = Main.screenShield._setActive;
@@ -143,7 +136,7 @@ function _activateFade(lightbox, time) {
     Main.uiGroup.set_child_above_sibling(lightbox, null);
     if (unblank.isUnblank() && !this._isActive) {
         lightbox.lightOn(time);
-        unblank.hideLightboxId = Mainloop.timeout_add(time + 1000,
+        unblank.hideLightboxId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, time + 1000,
                                                       () => { lightbox.lightOff();
                                                               _activateTimer();
                                                               unblank.hideLightboxId = 0;
@@ -157,11 +150,13 @@ function _activateFade(lightbox, time) {
 }
 
 function  _onUserBecameActive() {
-    this.idleMonitor.remove_watch(this._becameActiveId);
-    this._becameActiveId = 0;
+    if (this._becameActiveId != 0) {
+        this.idleMonitor.remove_watch(this._becameActiveId);
+        this._becameActiveId = 0;
+    }
 
     if (unblank.hideLightboxId != 0) {
-        Mainloop.source_remove(unblank.hideLightboxId);
+        GLib.source_remove(unblank.hideLightboxId);
         unblank.hideLightboxId= 0;
     }
     //_deactiveTimer();
@@ -220,7 +215,7 @@ function _activateTimer() {
     _deactiveTimer();
     let timer = unblank.gsettings.get_int('time');
     if (timer != 0) {
-        unblank._turnOffMonitorId = Mainloop.timeout_add_seconds(timer, () => {
+        unblank._turnOffMonitorId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, timer, () => {
             _changeToBlank();
             //_turnOffMonitor();
             unblank._turnOffMonitorId = 0;
@@ -232,7 +227,7 @@ function _activateTimer() {
 
 function _deactiveTimer() {
     if (unblank._turnOffMonitorId != 0) {
-        Mainloop.source_remove(unblank._turnOffMonitorId);
+        GLib.source_remove(unblank._turnOffMonitorId);
         unblank._turnOffMonitorId = 0;
     }
 }
@@ -245,24 +240,31 @@ function _turnOffMonitor() {
     unblank.proxy.PowerSaveMode = 1;
 }
 
-var unblank;
+var unblank = null;
 var enabled = false;
 
-function init() {
-}
+export default class PanelScrollExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
+    }
 
-function enable() {
-    if (enabled)
-        return;
-    unblank = new Unblank();
-    unblank.enable();
-    enabled = true;
-}
+    enable() {
+        this._settings = this.getSettings();
 
-function disable() {
-    if (!Main.sessionMode.isLocked) {
-        unblank.disable();
-        unblank = null;
-        enabled = false;
+        if (enabled)
+            return;
+        unblank = new Unblank(this._settings);
+        unblank.enable();
+        enabled = true;
+
+    }
+
+    disable() {
+        if (!Main.sessionMode.isLocked) {
+            unblank.disable();
+            unblank = null
+            enabled = false;
+            this._settings = null;
+        }
     }
 }
