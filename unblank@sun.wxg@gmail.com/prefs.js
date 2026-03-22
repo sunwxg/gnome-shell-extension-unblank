@@ -1,3 +1,4 @@
+import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -5,66 +6,89 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 const SCHEMA_NAME = 'org.gnome.shell.extensions.unblank';
 
 function buildPrefsWidget(gsettings) {
-    let widget = new Gtk.Box({
-        orientation: Gtk.Orientation.VERTICAL,
-        margin_top: 10,
-        margin_bottom: 10,
-        margin_start: 10,
-        margin_end: 10,
+    let page = new Adw.PreferencesPage();
+
+    let group = new Adw.PreferencesGroup({
+        title: 'Behavior',
+    });
+    page.add(group);
+
+    let powerRow = new Adw.ActionRow({ 
+        title: 'Only unblank on AC power',
+        subtitle: 'Keep original behavior when using battery'
+    });
+    let powerSwitch = new Gtk.Switch({ 
+        active: gsettings.get_boolean('power'), 
+        valign: Gtk.Align.CENTER 
+    });
+    
+    powerSwitch.connect('notify::active', (button) => { 
+        gsettings.set_boolean('power', button.active); 
+    });
+    
+    powerRow.add_suffix(powerSwitch);
+    powerRow.activatable_widget = powerSwitch;
+    group.add(powerRow);
+
+
+    let currentSeconds = gsettings.get_int('time');
+    let isNever = currentSeconds === 0;
+    let currentMinutes = isNever ? 5 : Math.floor(currentSeconds / 60);
+
+    let neverRow = new Adw.ActionRow({ 
+        title: 'Never blank screen',
+        subtitle: 'Disables the timeout completely'
+    });
+    let neverSwitch = new Gtk.Switch({ 
+        active: isNever, 
+        valign: Gtk.Align.CENTER 
+    });
+    
+    neverRow.add_suffix(neverSwitch);
+    neverRow.activatable_widget = neverSwitch;
+    group.add(neverRow);
+
+    let timeRow = new Adw.ActionRow({ 
+        title: 'Timeout to blank',
+        subtitle: 'Minutes after locking the screen'
+    });
+    
+    let timeAdjustment = new Gtk.Adjustment({
+        lower: 1,
+        upper: 1440,
+        step_increment: 1,
+        value: currentMinutes
     });
 
-    let vbox = new Gtk.Box({
-        orientation: Gtk.Orientation.VERTICAL,
-        margin_top: 10
+    let timebox_spinButton = new Gtk.SpinButton({
+        adjustment: timeAdjustment,
+        numeric: true,
+        climb_rate: 1.0,
+        valign: Gtk.Align.CENTER,
+        sensitive: !isNever
     });
-    vbox.set_size_request(550, 350);
 
-    let hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
-    let power_setting_label = new Gtk.Label({ label: "Only unblank when on AC",
-        hexpand: true,
-        xalign: 0 });
-    let power_setting_switch = new Gtk.Switch({ active: gsettings.get_boolean('power') });
+    timeRow.add_suffix(timebox_spinButton);
+    group.add(timeRow);
 
-    power_setting_switch.connect('notify::active',
-                   function (button) { gsettings.set_boolean('power', button.active); });
+    neverSwitch.connect('notify::active', (button) => {
+        let isNeverActive = button.active;
+        timebox_spinButton.set_sensitive(!isNeverActive);
+        
+        if (isNeverActive) {
+            gsettings.set_int('time', 0);
+        } else {
+            gsettings.set_int('time', timebox_spinButton.get_value_as_int() * 60);
+        }
+    });
 
-    hbox.append(power_setting_label);
-    hbox.append(power_setting_switch);
-    vbox.append(hbox);
+    timebox_spinButton.connect('value-changed', (spin) => {
+        if (!neverSwitch.get_active()) {
+            gsettings.set_int('time', spin.get_value_as_int() * 60);
+        }
+    });
 
-    hbox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, margin_top: 5 });
-    let timebox_label = new Gtk.Label({ label: "Timeout to blank after locking the screen",
-        hexpand: true,
-        xalign: 0 });
-    let timebox_comboBox= new Gtk.ComboBoxText();
-    timebox_comboBox.connect('changed',
-                             (box) => { gsettings.set_int('time', Number(box.get_active_id())) });
-
-    timebox_comboBox.append("0",    "Never");
-    timebox_comboBox.append("300",  "5 minutes");
-    timebox_comboBox.append("600",  "10 minutes");
-    timebox_comboBox.append("900",  "15 minutes");
-    timebox_comboBox.append("1800", "30 minutes");
-    timebox_comboBox.append("3600", "60 minutes");
-    timebox_comboBox.append("5400", "90 minutes");
-    timebox_comboBox.append("7200", "120 minutes");
-
-    timebox_comboBox.set_active_id(gsettings.get_int('time').toString());
-
-    hbox.append(timebox_label);
-    hbox.append(timebox_comboBox);
-    vbox.append(hbox);
-
-    widget.append(vbox);
-
-    return widget;
-}
-
-function addBoldTextToBox(text, box) {
-    let txt = new Gtk.Label({xalign: 0});
-    txt.set_markup('<b>' + text + '</b>');
-    txt.set_line_wrap(true);
-    box.append(txt);
+    return page;
 }
 
 export default class UnblankPrefs extends ExtensionPreferences {
