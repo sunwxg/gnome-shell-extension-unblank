@@ -11,10 +11,10 @@ GSCHEMA_FILE=org.gnome.shell.extensions.unblank.gschema.xml
 
 schemas:
 	glib-compile-schemas $(INSTALLNAME)/schemas/
-submit: schemas
+submit:
 	cd $(INSTALLNAME)/ && zip -r ~/unblank.zip *
 
-install:
+install: schemas
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME) $(SHARE_PREFIX)/glib-2.0/schemas/$(GSCHEMA_FILE)
 	mkdir -p $(INSTALLBASE)/$(INSTALLNAME)
 	cp -r $(INSTALLNAME)/* $(INSTALLBASE)/$(INSTALLNAME)/

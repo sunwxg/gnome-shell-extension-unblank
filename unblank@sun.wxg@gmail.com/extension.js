@@ -3,7 +3,6 @@
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import Gdk from 'gi://Gdk';
 import St from 'gi://St';
 import UPower from 'gi://UPowerGlib';
 
@@ -53,6 +52,7 @@ class Unblank {
         this.inLock = false;
         this._activeOnce = false;
         this.enabled = false;
+        this._powerChangedId = 0;
 
         //this.powerProxy = new PowerManagerProxy(Gio.DBus.system, UPOWER_BUS_NAME, UPOWER_OBJECT_PATH,
         this.powerProxy = new UPowerProxy(Gio.DBus.system,
@@ -63,8 +63,10 @@ class Unblank {
                                                         log(error.message);
                                                         return;
                                                     }
-                                                    this.powerProxy.connect('g-properties-changed',
-                                                                            this._onPowerChanged.bind(this));
+                                                    if (!this.enabled)
+                                                        return;
+                                                    this._powerChangedId = this.powerProxy.connect('g-properties-changed',
+                                                                                                    this._onPowerChanged.bind(this));
                                                     this._onPowerChanged(); });
     }
 
@@ -81,6 +83,10 @@ class Unblank {
         Main.screenShield._activateFade = this.activateFadeOrigin;
         Main.screenShield._resetLockScreen = this.resetLockScreenOrigin;
         Main.screenShield._onUserBecameActive = this.onUserBecameActiveOrigin;
+        if (this._powerChangedId != 0) {
+            this.powerProxy.disconnect(this._powerChangedId);
+            this._powerChangedId = 0;
+        }
         this.enabled = false;
     }
 
