@@ -73,6 +73,14 @@ export default class UnblankPrefs extends ExtensionPreferences {
             () => settings.set_int('oled-shift-interval', SHIFT_INTERVAL_OPTIONS[intervalRow.selected][0]));
         oledGroup.add(intervalRow);
 
+        const opacityRow = new Adw.SpinRow({
+            title: 'Content opacity (%)',
+            subtitle: 'Shows the clock and notifications dimmer; 100 leaves them unchanged',
+            adjustment: new Gtk.Adjustment({ lower: 20, upper: 100, step_increment: 5, page_increment: 10 }),
+        });
+        settings.bind('oled-content-opacity', opacityRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        oledGroup.add(opacityRow);
+
         window.add(page);
     }
 }

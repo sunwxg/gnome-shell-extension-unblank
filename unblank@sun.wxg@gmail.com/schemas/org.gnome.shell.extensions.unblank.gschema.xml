@@ -33,6 +33,12 @@
       <summary>Shift interval (seconds)</summary>
       <range min="5" max="600"/>
     </key>
+    <key name="oled-content-opacity" type="i">
+      <default>80</default>
+      <summary>Opacity of the lock screen content (percent)</summary>
+      <description>Shows the clock and notifications dimmer while the screen stays on, like the logo luminance adjustment of OLED TVs. 100 = unchanged.</description>
+      <range min="20" max="100"/>
+    </key>
   </schema>
 </schemalist>
 
