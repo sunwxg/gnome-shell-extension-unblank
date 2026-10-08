@@ -18,6 +18,27 @@
       <description>
       </description>
     </key>
+    <key name="oled-shift" type="b">
+      <default>true</default>
+      <summary>Shift lock screen content (OLED burn-in protection)</summary>
+      <description>While the screen stays on, glide the clock, date and notifications to a new random position every interval, like the Screen Shift feature of OLED TVs. The wallpaper is not moved.</description>
+    </key>
+    <key name="oled-shift-radius" type="i">
+      <default>12</default>
+      <summary>Maximum shift distance (pixels)</summary>
+      <range min="1" max="60"/>
+    </key>
+    <key name="oled-shift-interval" type="i">
+      <default>60</default>
+      <summary>Shift interval (seconds)</summary>
+      <range min="5" max="600"/>
+    </key>
+    <key name="oled-content-opacity" type="i">
+      <default>80</default>
+      <summary>Opacity of the lock screen content (percent)</summary>
+      <description>Shows the clock and notifications dimmer while the screen stays on, like the logo luminance adjustment of OLED TVs. 100 = unchanged.</description>
+      <range min="20" max="100"/>
+    </key>
   </schema>
 </schemalist>
 
