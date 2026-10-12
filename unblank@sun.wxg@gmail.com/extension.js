@@ -126,7 +126,9 @@ function _setActive(active) {
     if (prevIsActive != this._isActive) {
         if (!unblank.isUnblank() || unblank._activeOnce) {
             this.emit('active-changed');
-            unblank._activeOnce = false;
+            // Remember an announced lock, so the unlock is announced too
+            // even if the power source changed in between (issue #37)
+            unblank._activeOnce = active;
         }
     }
     if (active) {
