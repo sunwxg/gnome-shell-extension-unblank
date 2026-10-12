@@ -81,6 +81,13 @@ export default class UnblankPrefs extends ExtensionPreferences {
         settings.bind('oled-content-opacity', opacityRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         oledGroup.add(opacityRow);
 
+        const blackRow = new Adw.SwitchRow({
+            title: 'Black background',
+            subtitle: 'Hides the wallpaper while the clock is shown',
+        });
+        settings.bind('oled-black-background', blackRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        oledGroup.add(blackRow);
+
         window.add(page);
     }
 }
