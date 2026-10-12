@@ -39,6 +39,11 @@
       <description>Shows the clock and notifications dimmer while the screen stays on, like the logo luminance adjustment of OLED TVs. 100 = unchanged.</description>
       <range min="20" max="100"/>
     </key>
+    <key name="oled-black-background" type="b">
+      <default>false</default>
+      <summary>Black lock screen background</summary>
+      <description>While the screen stays on, cover the wallpaper with black as long as the clock is shown, so only the clock and notifications are lit. The wallpaper comes back when the password prompt is shown.</description>
+    </key>
   </schema>
 </schemalist>
 
