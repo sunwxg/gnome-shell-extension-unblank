@@ -4,6 +4,7 @@
   "name": "Unblank lock screen",
   "description": "Unblank lock screen.",
   "shell-version": [
+    "50",
     "51"
   ],
   "url": "https://github.com/sunwxg/gnome-shell-extension-unblank"
